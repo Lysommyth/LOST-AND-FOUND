@@ -2,30 +2,25 @@
 /*session_start();
 require 'config/db.php';
 
-// 1. Check if the student is logged in
-// If this is enabled and you aren't logged in, you will be kicked to index.php
+// 1. Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
 }
 
-// 2. Fetch the logged-in student's details
-$stmt = $pdo->prepare("SELECT username, full_name, course_year FROM users WHERE id = ?");
+// 2. Fetch User Data & Role
+$stmt = $pdo->prepare("SELECT username, full_name, course_year, role FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
-// 3. Count available items for the badge
-$countItemsStmt = $pdo->query("SELECT COUNT(*) FROM items WHERE status = 'available'");
-$totalItems = $countItemsStmt->fetchColumn();
+// 3. Dynamic Counts for Badges
+// Browse Items: only count those that are available
+$totalItems = $pdo->query("SELECT COUNT(*) FROM items WHERE status = 'available'")->fetchColumn();
 
-// 4. Count pending claims for the admin badge
-$countClaimsStmt = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pending'");
-$pendingClaims = $countClaimsStmt->fetchColumn();
-
-// 5. Fetch all found items for the dashboard feed
-$itemStmt = $pdo->query("SELECT * FROM items ORDER BY created_at DESC");
-$dbItems = $itemStmt->fetchAll(PDO::FETCH_ASSOC);*/
+// Claim Reviews: only count pending claims (for Admin view)
+$pendingClaims = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pending'")->fetchColumn();*/
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,6 +81,89 @@ $dbItems = $itemStmt->fetchAll(PDO::FETCH_ASSOC);*/
   .report-btn { background: var(--gold); color: var(--navy); border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background var(--trans); white-space: nowrap; }
   .report-btn:hover { background: var(--gold-light); }
 
+  /* CONTENT */
+  .content { flex: 1; overflow-y: auto; padding: 22px 24px; }
+  .page-header { margin-bottom: 18px; }
+  .page-title { font-size: 18px; font-weight: 600; color: var(--text-main); }
+  .page-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+   /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 14px 16px; }
+  .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-value { font-size: 24px; font-weight: 700; color: var(--navy); line-height: 1; }
+  .stat-meta { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+  .stat-accent { border-left: 3px solid var(--gold); }
+
+   /* FILTERS */
+  .filter-bar { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .filter-label { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .filter-select { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 6px; padding: 5px 10px; font-size: 12px; color: var(--text-main); outline: none; cursor: pointer; transition: border-color var(--trans); }
+  .filter-select:focus, .filter-select:hover { border-color: var(--gold); }
+  .sort-btn { margin-left: auto; background: var(--navy); color: var(--white); border: none; border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: opacity var(--trans); }
+  .sort-btn:hover { opacity: 0.85; }
+
+    /* ITEMS GRID */
+  .section-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .section-title { font-size: 14px; font-weight: 600; color: var(--text-main); }
+  .section-count { font-size: 12px; color: var(--text-muted); }
+  .items-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .item-card { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius-lg); overflow: hidden; cursor: pointer; transition: transform var(--trans), box-shadow var(--trans), border-color var(--trans); }
+  .item-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(11,31,58,0.1); border-color: var(--gold); }
+  .card-img { height: 130px; background: var(--gray-bg); display: flex; align-items: center; justify-content: center; font-size: 44px; position: relative; }
+  .card-img.electronics { background: #EFF6FF; }
+  .card-img.ids { background: #F0FDF4; }
+  .card-img.accessories { background: #FFF7ED; }
+  .card-img.clothing { background: #FDF4FF; }
+  .card-img.bags { background: #F0F9FF; }
+  .card-img.books { background: #FEFCE8; }
+  .card-body { padding: 12px 14px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tag { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px; }
+  .tag-loc { background: #F1F5F9; color: #475569; }
+  .tag-date { background: #F8FAFC; color: #94A3B8; border: 1px solid #E2E8F0; }
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-block; }
+  .badge-unclaimed { background: var(--badge-unclaimed); color: var(--badge-unclaimed-t); }
+  .badge-claimed { background: var(--badge-claimed); color: var(--badge-claimed-t); }
+  .badge-pending { background: var(--badge-pending); color: var(--badge-pending-t); }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .view-btn { font-size: 11px; font-weight: 600; color: var(--navy); background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 6px; padding: 4px 10px; cursor: pointer; transition: background var(--trans), border-color var(--trans), color var(--trans); }
+  .view-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+  .claim-btn { font-size: 11px; font-weight: 600; color: var(--white); background: var(--navy); border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; transition: opacity var(--trans); }
+  .claim-btn:hover { opacity: 0.8; }
+
+    /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(11,31,58,0.55); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: var(--radius-lg); width: 480px; max-width: 96vw; overflow: hidden; }
+  .modal-img { height: 180px; display: flex; align-items: center; justify-content: center; font-size: 72px; background: #EFF6FF; }
+  .modal-body { padding: 20px 22px; }
+  .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--navy); }
+  .close-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--gray-border); background: transparent; cursor: pointer; font-size: 16px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+  .close-btn:hover { background: var(--gray-bg); }
+  .modal-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .modal-key { font-size: 12px; color: var(--text-muted); min-width: 80px; }
+  .modal-val { font-size: 13px; font-weight: 500; color: var(--text-main); }
+  .modal-divider { height: 1px; background: var(--gray-border); margin: 14px 0; }
+  .modal-actions { display: flex; gap: 10px; }
+  .btn-primary { flex: 1; background: var(--gold); color: var(--navy); border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background var(--trans); }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-secondary { flex: 1; background: var(--gray-bg); color: var(--text-main); border: 1px solid var(--gray-border); border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+   /* NOTIFICATION PANEL */
+  .notif-panel { display: none; position: absolute; top: 58px; right: 60px; width: 290px; background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius-lg); z-index: 50; box-shadow: 0 10px 30px rgba(11,31,58,0.12); }
+  .notif-panel.open { display: block; }
+  .notif-head { padding: 12px 14px; border-bottom: 1px solid var(--gray-border); font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .notif-clear { font-size: 11px; color: var(--gold); cursor: pointer; font-weight: 400; }
+  .notif-item { padding: 10px 14px; border-bottom: 1px solid var(--gray-border); display: flex; gap: 10px; align-items: flex-start; }
+  .notif-dot2 { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .notif-text { font-size: 12px; color: var(--text-main); line-height: 1.4; }
+  .notif-time { font-size: 10px; color: var(--text-light); margin-top: 2px; }
+  
+
   
     </style>
     </head>
@@ -96,38 +174,40 @@ $dbItems = $itemStmt->fetchAll(PDO::FETCH_ASSOC);*/
   <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-badge">
-  <div class="logo-icon">
-    <!-- Reference the image relative to the htdocs folder -->
-    <img src="/LOST AND FOUND/strathmorelogo.png" alt="SU Logo" style="height: 32px; width: auto;">
-  </div>
-  <div class="logo-text">Lost &amp; Found<span>Strathmore University</span></div>
-  </div>
-
+      <div class="logo-icon">
+        <img src="/LOST AND FOUND/strath.png" alt="SU Logo" style="height: 32px; width: auto;">
+      </div>
+      <div class="logo-text">Lost &amp; Found<span>Strathmore University</span></div>
+    </div>
   </div>
   
   <nav class="nav-section">
     <div class="nav-label">Main</div>
     <div class="nav-item active"><span class="nav-icon">◈</span> Dashboard</div>
+    
     <div class="nav-item" onclick="openReport()"><span class="nav-icon">＋</span> Report Item</div>
     
     <div class="nav-item">
       <span class="nav-icon">◉</span> Browse Items 
-      <span class="nav-badge"><?php echo $totalItems; ?></span>
+      <span class="nav-badge"><?php echo (int)$totalItems; ?></span>
     </div>
     
     <div class="nav-item"><span class="nav-icon">♦</span> My Reports</div>
     
-    <div class="nav-label">Admin</div>
-    <div class="nav-item"><span class="nav-icon">⊞</span> Admin Panel</div>
-    
-    <div class="nav-item">
-      <span class="nav-icon">↺</span> Claim Reviews 
-      <?php if ($pendingClaims > 0): ?>
-          <span class="nav-badge"><?php echo $pendingClaims; ?></span>
-      <?php endif; ?>
-    </div>
-    
-    <div class="nav-item"><span class="nav-icon">≡</span> Reports &amp; Logs</div>
+    /*<?php if (isset($user['role']) && $user['role'] === 'admin'): ?>
+        <div class="nav-label">Admin</div>
+        <div class="nav-item"><span class="nav-icon">⊞</span> Admin Panel</div>
+        
+        <div class="nav-item">
+          <span class="nav-icon">↺</span> Claim Reviews 
+          <?php if ($pendingClaims > 0): ?>
+              <span class="nav-badge"><?php echo (int)$pendingClaims; ?></span>
+          <?php endif; ?>
+        </div>
+        
+        <div class="nav-item"><span class="nav-icon">≡</span> Reports &amp; Logs</div>
+    <?php endif; ?>*/
+
     <div class="nav-label">Account</div>
     <a href="logout.php" style="text-decoration: none;">
         <div class="nav-item" style="color: #ff6b6b;">
@@ -138,14 +218,58 @@ $dbItems = $itemStmt->fetchAll(PDO::FETCH_ASSOC);*/
 
   <div class="sidebar-footer">
     <div class="user-mini">
-      <div class="avatar-sm"><?php echo strtoupper(substr($user['username'], 0, 2)); ?></div>
+      <div class="avatar-sm">
+          <?php echo strtoupper(substr($user['full_name'] ?? $user['username'], 0, 2)); ?>
+      </div>
       <div class="user-info-sm">
         <?php echo htmlspecialchars($user['full_name'] ?? $user['username']); ?>
-        <span>Student · <?php echo htmlspecialchars($user['course_year'] ?? 'N/A'); ?></span>
+        <span><?php echo ucfirst($user['role']); ?> · <?php echo htmlspecialchars($user['course_year'] ?? 'N/A'); ?></span>
       </div>
     </div>
   </div>
 </aside>
+<main class="main">
+    <header class="topbar" style="position:relative;">
+        <div class="search-wrap">
+            <span class="search-icon">⌕</span>
+            <input type="text" placeholder="Search items — e.g. laptop, ID card, bag..." id="searchInput" oninput="filterItems()">
+        </div>
+        
+        <div class="topbar-actions">
+            <button class="icon-btn" onclick="toggleNotif()" title="Notifications">
+                🔔<span class="notif-dot"></span>
+            </button>
+            
+            <div class="avatar-btn">
+                <?php 
+                    $nameParts = explode(' ', $user['username']);
+                    echo strtoupper(substr($nameParts[0], 0, 1) . (isset($nameParts[1]) ? substr($nameParts[1], 0, 1) : '')); 
+                ?>
+            </div>
+            
+            <button class="report-btn" onclick="openReport()">＋ Report Item</button>
+        </div>
+
+        <div class="notif-panel" id="notifPanel">
+            <div class="notif-head">Notifications <span class="notif-clear">Mark all read</span></div>
+            <div class="notif-item">
+                <div class="notif-dot2"></div>
+                <div>
+                    <div class="notif-text">Welcome back, <?php echo htmlspecialchars($user['username']); ?>!</div>
+                    <div class="notif-time">Just now</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="content">
+        <div class="page-header">
+            <div class="page-title">Lost &amp; Found Dashboard</div>
+            <div class="page-sub">
+                There are currently <strong><?php echo $totalItems; ?></strong> available items on campus. 
+                Keep checking to find your lost property!
+            </div>
+        </div>
 
   
 
