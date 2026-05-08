@@ -18,7 +18,20 @@ $user = $stmt->fetch();
 $totalItems = $pdo->query("SELECT COUNT(*) FROM items WHERE status = 'available'")->fetchColumn();
 
 // Claim Reviews: only count pending claims (for Admin view)
-$pendingClaims = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pending'")->fetchColumn();*/
+$pendingClaims = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pending'")->fetchColumn();
+
+// 4 Total Items (All time or this semester)
+$totalItemsAll = $pdo->query("SELECT COUNT(*) FROM items")->fetchColumn();
+
+// 5. Unclaimed (Items still marked as 'available')
+$unclaimed = $pdo->query("SELECT COUNT(*) FROM items WHERE status = 'available'")->fetchColumn();
+
+// 6. Claimed (Items successfully returned)
+$claimed = $pdo->query("SELECT COUNT(*) FROM items WHERE status = 'claimed'")->fetchColumn();
+
+// 7. Pending Review (Claims that haven't been approved yet)
+$pending = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pending'")->fetchColumn();
+*/
 ?>
 
 <!DOCTYPE html>
@@ -228,11 +241,13 @@ $pendingClaims = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = '
     </div>
   </div>
 </aside>
+ <!-- MAIN AREA -->
 <main class="main">
+  <!-- TOPBAR -->
     <header class="topbar" style="position:relative;">
         <div class="search-wrap">
             <span class="search-icon">⌕</span>
-            <input type="text" placeholder="Search items — e.g. laptop, ID card, bag..." id="searchInput" oninput="filterItems()">
+            <input type="text" placeholder="Search items " id="searchInput" oninput="filterItems()">
         </div>
         
         <div class="topbar-actions">
@@ -270,6 +285,32 @@ $pendingClaims = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = '
                 Keep checking to find your lost property!
             </div>
         </div>
+    
+    <div class="stats-row">
+  <div class="stat-card stat-accent">
+    <div class="stat-label">Total Items</div>
+    <div class="stat-value"><?= $totalItemsAll ?></div>
+    <div class="stat-meta">This semester</div>
+  </div>
+  
+  <div class="stat-card">
+    <div class="stat-label">Unclaimed</div>
+    <div class="stat-value" style="color:#D97706;"><?= $unclaimed ?></div>
+    <div class="stat-meta">Awaiting owners</div>
+  </div>
+  
+  <div class="stat-card">
+    <div class="stat-label">Claimed</div>
+    <div class="stat-value" style="color:#059669;"><?= $claimed ?></div>
+    <div class="stat-meta">Successfully returned</div>
+  </div>
+  
+  <div class="stat-card">
+    <div class="stat-label">Pending Review</div>
+    <div class="stat-value" style="color:#2563EB;"><?= $pending ?></div>
+    <div class="stat-meta">Awaiting admin</div>
+  </div>
+</div>
 
   
 
