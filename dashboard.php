@@ -385,6 +385,140 @@ $pending = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pendin
     </div>
   </div>
 </div>
+
+<script>
+// 1. DYNAMIC DATA SOURCE
+// This line injects your HeidiSQL rows into JavaScript automatically
+const ITEMS = <?php echo json_encode($dbItems); ?>;
+
+let sortAsc = false;
+let currentItems = [...ITEMS];
+
+// Helper to handle status styling
+function badgeClass(s) {
+    const status = s.toLowerCase();
+    if (status === 'available' || status === 'unclaimed') return 'badge-unclaimed';
+    if (status === 'claimed') return 'badge-claimed';
+    return 'badge-pending';
+}
+
+// Helper to handle category colors (matches your CSS classes)
+function getBgClass(cat) {
+    const mapping = {
+        'Electronics': 'electronics',
+        'ID/Cards': 'ids',
+        'Bags': 'bags',
+        'Accessories': 'accessories',
+        'Books': 'books',
+        'Clothing': 'clothing'
+    };
+    return mapping[cat] || 'default-bg';
+}
+
+// Helper for Emojis
+function getEmoji(cat) {
+    const icons = {
+        'Electronics': '💻', 'ID/Cards': '🪪', 'Bags': '🎒', 
+        'Accessories': '⌚', 'Books': '📚', 'Clothing': '🧥'
+    };
+    return icons[cat] || '📦';
+}
+
+function renderCard(it) {
+    // We use it.id directly from the database row
+    return `
+    <div class="item-card" onclick="openModalById(${it.id})">
+        <div class="card-img ${getBgClass(it.category)}">${getEmoji(it.category)}</div>
+        <div class="card-body">
+            <div class="card-title">${it.item_name}</div>
+            <div class="card-meta">
+                <span class="tag tag-loc">📍 ${it.location_found}</span>
+                <span class="tag tag-date">${formatDate(it.created_at)}</span>
+            </div>
+            <span class="badge ${badgeClass(it.status)}">${it.status}</span>
+            <div class="card-footer">
+                <button class="view-btn" onclick="event.stopPropagation();openModalById(${it.id})">View Details</button>
+                ${it.status === 'available' ? `<button class="claim-btn" onclick="event.stopPropagation();openModalById(${it.id})">Claim</button>` : ''}
+            </div>
+        </div>
+    </div>`;
+}
+
+function filterItems() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const cat = document.getElementById('catFilter').value;
+    const loc = document.getElementById('locFilter').value;
+    const st = document.getElementById('statusFilter').value;
+
+    currentItems = ITEMS.filter(it => {
+        const matchesSearch = !q || 
+            it.item_name.toLowerCase().includes(q) || 
+            it.location_found.toLowerCase().includes(q) || 
+            it.description.toLowerCase().includes(q);
+        
+        const matchesCat = !cat || it.category === cat;
+        const matchesLoc = !loc || it.location_found === loc;
+        const matchesStatus = !st || it.status.toLowerCase() === st.toLowerCase();
+
+        return matchesSearch && matchesCat && matchesLoc && matchesStatus;
+    });
+    renderGrid();
+}
+
+function renderGrid() {
+    const grid = document.getElementById('itemsGrid');
+    grid.innerHTML = currentItems.length 
+        ? currentItems.map(renderCard).join('') 
+        : '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);font-size:13px;">No items found matching your filters.</div>';
+    
+    document.getElementById('itemCount').textContent = `Showing ${currentItems.length} item${currentItems.length !== 1 ? 's' : ''}`;
+}
+
+function toggleSort() {
+    sortAsc = !sortAsc;
+    currentItems.reverse(); // Since initial PHP fetch is usually DESC, reversing gives ASC
+    document.getElementById('sortLabel').textContent = sortAsc ? 'Oldest' : 'Newest';
+    renderGrid();
+}
+
+// Open modal using the database ID
+function openModalById(id) {
+    const it = ITEMS.find(item => item.id == id);
+    if (!it) return;
+
+    document.getElementById('modalImg').textContent = getEmoji(it.category);
+    document.getElementById('modalImg').className = `modal-img ${getBgClass(it.category)}`;
+    document.getElementById('modalTitle').textContent = it.item_name;
+    document.getElementById('modalBadge').innerHTML = `<span class="badge ${badgeClass(it.status)}">${it.status}</span>`;
+    document.getElementById('modalCat').textContent = it.category;
+    document.getElementById('modalLoc').textContent = it.location_found;
+    document.getElementById('modalDate').textContent = formatDate(it.created_at);
+    document.getElementById('modalId').textContent = '#LF-' + String(it.id).padStart(4, '0');
+    document.getElementById('modalDesc').textContent = it.description;
+    document.getElementById('modalOverlay').classList.add('open');
+}
+
+function formatDate(dateString) {
+    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+}
+
+function closeModal(e) { if(e.target === document.getElementById('modalOverlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+let notifOpen = false;
+function toggleNotif() {
+    notifOpen = !notifOpen;
+    document.getElementById('notifPanel').classList.toggle('open', notifOpen);
+}
+
+function openReport() { 
+    window.location.href = 'report_item.php'; 
+}
+
+// Initial Run
+renderGrid();
+</script>
    
 
 </body>
