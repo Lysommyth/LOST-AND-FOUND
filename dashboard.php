@@ -350,9 +350,40 @@ $pending = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pendin
         <button class="sort-btn" onclick="toggleSort()">↕ <span id="sortLabel">Newest</span></button>
       </div>
 
+      <!-- ITEMS GRID -->
+      <div class="section-meta">
+        <div class="section-title">Found Items</div>
+        <div class="section-count" id="itemCount">Showing 9 items</div>
+      </div>
+      <div class="items-grid" id="itemsGrid"></div>
+    </div>
+  </main>
+</div>
 
-  
-
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-img" id="modalImg">💻</div>
+    <div class="modal-body">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="modalTitle">HP Laptop</div>
+          <div style="margin-top:4px;" id="modalBadge"><span class="badge badge-unclaimed">Unclaimed</span></div>
+        </div>
+        <button class="close-btn" onclick="closeModalDirect()">✕</button>
+      </div>
+      <div class="modal-row"><span class="modal-key">Category</span><span class="modal-val" id="modalCat">Electronics</span></div>
+      <div class="modal-row"><span class="modal-key">Location</span><span class="modal-val" id="modalLoc">Library, Floor 2</span></div>
+      <div class="modal-row"><span class="modal-key">Date Found</span><span class="modal-val" id="modalDate">May 2, 2026</span></div>
+      <div class="modal-row"><span class="modal-key">Item ID</span><span class="modal-val" id="modalId">#LF-0084</span></div>
+      <div class="modal-row"><span class="modal-key">Description</span><span class="modal-val" id="modalDesc">Silver HP laptop found on study table. Charger included.</span></div>
+      <div class="modal-divider"></div>
+      <div class="modal-actions">
+        <<button class="btn-primary" onclick="initiateClaim(${item.id})">Submit Claim ↗</button>button class="btn-primary" onclick="sendPrompt('How do I submit a claim for a lost laptop at Strathmore University Lost and Found?')">Submit Claim ↗</button>
+        <button class="btn-secondary" onclick="closeModalDirect()">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
    
 
