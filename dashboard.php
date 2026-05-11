@@ -285,7 +285,7 @@ $pending = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pendin
                 Keep checking to find your lost property!
             </div>
         </div>
-    
+    <!-- STATS -->
     <div class="stats-row">
   <div class="stat-card stat-accent">
     <div class="stat-label">Total Items</div>
@@ -311,6 +311,45 @@ $pending = $pdo->query("SELECT COUNT(*) FROM claims WHERE claim_status = 'pendin
     <div class="stat-meta">Awaiting admin</div>
   </div>
 </div>
+
+ <!-- FILTERS -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Category</span>
+          <select class="filter-select" id="catFilter" onchange="filterItems()">
+            <option value="">All</option>
+            <option value="Electronics">Electronics</option>
+            <option value="ID/Cards">IDs &amp; Cards</option>
+            <option value="Accessories">Accessories</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Bags">Bags</option>
+            <option value="Books">Books</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Location</span>
+          <select class="filter-select" id="locFilter" onchange="filterItems()">
+            <option value="">All Locations</option>
+            <option>Library</option>
+            <option>Cafeteria</option>
+            <option>Main Gate</option>
+            <option>Block C Lecture</option>
+            <option>Sports Complex</option>
+            <option>Admin Block</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Status</span>
+          <select class="filter-select" id="statusFilter" onchange="filterItems()">
+            <option value="">All Status</option>
+            <option>Unclaimed</option>
+            <option>Claimed</option>
+            <option>Pending</option>
+          </select>
+        </div>
+        <button class="sort-btn" onclick="toggleSort()">↕ <span id="sortLabel">Newest</span></button>
+      </div>
+
 
   
 
