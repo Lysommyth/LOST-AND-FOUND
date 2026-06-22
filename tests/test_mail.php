@@ -2,9 +2,9 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require 'vendor/autoload.php';
-$mailConfig = require 'config/mail_config.php';
-require 'config/db.php'; // DB connection
+require '../vendor/autoload.php';
+$mailConfig = require '../config/mail_config.php';
+require '../config/db.php';
 
 $mail = new PHPMailer(true);
 
